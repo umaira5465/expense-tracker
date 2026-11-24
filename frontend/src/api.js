@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = "http://localhost:5050/api/expenses";
+const API = "http://localhost:5000/api/expenses";
 
 // Turns any axios error into a readable message
 export const getErrorMessage = (err) =>

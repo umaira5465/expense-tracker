@@ -204,13 +204,7 @@ function ExpenseUI({
         </div>
       </div>
 
-      {/* WHATSAPP (outside any condition, so it always shows) */}
-      <WhatsAppButton
-        startingBalance={startingBalance}
-        totalExpenses={totalExpenses}
-        remainingBalance={remainingBalance}
-        transactions={transactions}
-      />
+     
 
       {/* STARTING BALANCE */}
       <h2>Starting Balance</h2>

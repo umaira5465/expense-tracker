@@ -1,520 +1,206 @@
-
 import { useEffect, useState } from "react";
+import { Provider, useDispatch, useSelector } from "react-redux";
 import "./App.css";
 
-const API = "http://localhost:5000/api/expenses";
+import ExpenseUI from "./ExpenseUI";
 
-const expenseTypes = [
-  "Food",
-  "Transport",
-  "Shopping",
-  "Rent",
-  "Electricity",
-  "Water Bill",
-  "Internet",
-  "Education",
-  "Healthcare",
-  "Entertainment",
-  "Other"
-];
+// Approach 1: Zustand
+import { useExpenseStore } from "./features/expenses/zustandStore";
 
-const stateDescriptions = {
-  Zustand: "Simple and lightweight global state management.",
-  "Redux Toolkit": "Modern Redux with less boilerplate and simpler reducers.",
-  "Redux Thunk": "Classic Redux: hand-written action types, reducer and thunks."
-};
+// Approach 2: Redux Toolkit
+import { store as rtkStore } from "./app/store";
+import * as rtk from "./features/expenses/expenseSlice";
 
-function App() {
-  const [activeTab, setActiveTab] = useState("Redux Thunk");
+// Approach 3: Redux + redux-thunk (hand-written)
+import * as thunk from "./features/expenses/thunkStore";
 
-  const [balance, setBalance] = useState("0");
-  const [balanceInput, setBalanceInput] = useState("0");
-  const [expenses, setExpenses] = useState([]);
+/* ---------------------------------------------------------------
+   1) ZUSTAND
+---------------------------------------------------------------- */
+function ZustandView() {
+  const startingBalance = useExpenseStore((s) => s.startingBalance);
+  const transactions = useExpenseStore((s) => s.transactions);
+  const loading = useExpenseStore((s) => s.loading);
+  const error = useExpenseStore((s) => s.error);
 
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
-
-  const [editingExpense, setEditingExpense] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editAmount, setEditAmount] = useState("");
-
-  const [deleteId, setDeleteId] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const loadExpenses = async () => {
-    try {
-      const response = await fetch(API);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Unable to load expenses");
-      }
-
-      setBalance(String(data.startingBalance ?? 0));
-      setBalanceInput(String(data.startingBalance ?? 0));
-
-      setExpenses(
-        Array.isArray(data.expenses)
-          ? data.expenses.map((item) => ({
-              ...item,
-              quantity: Number(item.quantity || 1)
-            }))
-          : []
-      );
-    } catch (error) {
-      console.error("Loading error:", error);
-      alert("Cannot connect to backend. Make sure server.js is running.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchExpenses = useExpenseStore((s) => s.fetchExpenses);
+  const saveBalance = useExpenseStore((s) => s.saveBalance);
+  const addExpense = useExpenseStore((s) => s.addExpense);
+  const updateExpense = useExpenseStore((s) => s.updateExpense);
+  const deleteExpense = useExpenseStore((s) => s.deleteExpense);
 
   useEffect(() => {
-    loadExpenses();
-  }, []);
-
-  const totalExpenses = expenses.reduce(
-    (total, item) =>
-      total + Number(item.amount) * Number(item.quantity || 1),
-    0
-  );
-
-  const remainingBalance = Number(balance) - totalExpenses;
-
-  const formatMoney = (value) =>
-    Number(value).toLocaleString("en-PK", {
-      maximumFractionDigits: 2
-    });
-
-  const saveBalance = async () => {
-    const newBalance = Number(balanceInput);
-
-    if (
-      balanceInput.trim() === "" ||
-      !Number.isFinite(newBalance) ||
-      newBalance < 0
-    ) {
-      alert("Enter a valid starting balance");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API}/balance`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          startingBalance: newBalance
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Balance could not be saved");
-      }
-
-      setBalance(String(data.startingBalance));
-      setBalanceInput(String(data.startingBalance));
-
-      alert("Starting balance saved successfully!");
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
-    }
-  };
-
-  const addExpense = async (event) => {
-    event.preventDefault();
-
-    if (!title || amount.trim() === "" || Number(amount) <= 0) {
-      alert("Select an expense type and enter a valid amount");
-      return;
-    }
-
-    try {
-      const response = await fetch(API, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          title,
-          amount: Number(amount)
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Expense could not be added");
-      }
-
-      setTitle("");
-      setAmount("");
-
-      await loadExpenses();
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
-    }
-  };
-
-  const updateQuantity = async (item, change) => {
-    const newQuantity = Number(item.quantity || 1) + change;
-
-    if (newQuantity < 1) return;
-
-    try {
-      const response = await fetch(`${API}/${item.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          title: item.title,
-          amount: Number(item.amount),
-          quantity: newQuantity
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Quantity update failed");
-      }
-
-      await loadExpenses();
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
-    }
-  };
-
-  const openEditPopup = (item) => {
-    setEditingExpense(item);
-    setEditTitle(item.title);
-    setEditAmount(String(item.amount));
-  };
-
-  const saveEdit = async (event) => {
-    event.preventDefault();
-
-    if (
-      !editTitle ||
-      editAmount.trim() === "" ||
-      Number(editAmount) <= 0
-    ) {
-      alert("Select an expense type and enter a valid amount");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API}/${editingExpense.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          title: editTitle,
-          amount: Number(editAmount),
-          quantity: Number(editingExpense.quantity || 1)
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Expense update failed");
-      }
-
-      setEditingExpense(null);
-      await loadExpenses();
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
-    }
-  };
-
-  const deleteExpense = async () => {
-    if (deleteId === null) return;
-
-    try {
-      const response = await fetch(`${API}/${deleteId}`, {
-        method: "DELETE"
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Delete failed");
-      }
-
-      setDeleteId(null);
-      await loadExpenses();
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
-    }
-  };
-
-  if (loading) {
-    return <h2 className="loading">Loading Expense Tracker...</h2>;
-  }
+    fetchExpenses();
+  }, [fetchExpenses]);
 
   return (
-    <div className="app-container">
-      <header className="app-header">
+    <ExpenseUI
+      startingBalance={startingBalance}
+      transactions={transactions}
+      loading={loading}
+      error={error}
+      onSaveBalance={saveBalance}
+      onAdd={addExpense}
+      onUpdate={updateExpense}
+      onDelete={deleteExpense}
+    />
+  );
+}
+
+/* ---------------------------------------------------------------
+   2) REDUX TOOLKIT
+---------------------------------------------------------------- */
+function RtkInner() {
+  const dispatch = useDispatch();
+  const { startingBalance, transactions, loading, error } = useSelector(
+    (state) => state.expenses
+  );
+
+  useEffect(() => {
+    dispatch(rtk.fetchExpenses());
+  }, [dispatch]);
+
+  return (
+    <ExpenseUI
+      startingBalance={startingBalance}
+      transactions={transactions}
+      loading={loading}
+      error={error}
+      onSaveBalance={(b) => dispatch(rtk.saveBalance(b))}
+      onAdd={(e) => dispatch(rtk.addTransaction(e))}
+      onUpdate={(id, e) => dispatch(rtk.updateTransaction({ id, ...e }))}
+      onDelete={(id) => dispatch(rtk.deleteTransaction(id))}
+    />
+  );
+}
+
+function RtkView() {
+  return (
+    <Provider store={rtkStore}>
+      <RtkInner />
+    </Provider>
+  );
+}
+
+/* ---------------------------------------------------------------
+   3) REDUX THUNK
+---------------------------------------------------------------- */
+function ThunkInner() {
+  const dispatch = useDispatch();
+  const { startingBalance, transactions, loading, error } = useSelector(
+    (state) => state
+  );
+
+  useEffect(() => {
+    dispatch(thunk.fetchExpenses());
+  }, [dispatch]);
+
+  return (
+    <ExpenseUI
+      startingBalance={startingBalance}
+      transactions={transactions}
+      loading={loading}
+      error={error}
+      onSaveBalance={(b) => dispatch(thunk.saveBalance(b))}
+      onAdd={(e) => dispatch(thunk.addExpense(e))}
+      onUpdate={(id, e) => dispatch(thunk.updateExpense(id, e))}
+      onDelete={(id) => dispatch(thunk.deleteExpense(id))}
+    />
+  );
+}
+
+function ThunkView() {
+  return (
+    <Provider store={thunk.thunkStore}>
+      <ThunkInner />
+    </Provider>
+  );
+}
+
+/* ---------------------------------------------------------------
+   Tabs
+---------------------------------------------------------------- */
+const APPROACHES = {
+  zustand: {
+    label: "Zustand",
+    note: "One store holds state + async actions. No Provider, no reducers.",
+    View: ZustandView,
+  },
+  rtk: {
+    label: "Redux Toolkit",
+    note: "createSlice + createAsyncThunk: reducers and action types are generated.",
+    View: RtkView,
+  },
+  thunk: {
+    label: "Redux Thunk",
+    note: "Classic Redux: hand-written action types, reducer and thunks.",
+    View: ThunkView,
+  },
+};
+
+/* ---------------------------------------------------------------
+   Floating WhatsApp icon (inline styles, so it never depends on CSS)
+---------------------------------------------------------------- */
+function WhatsAppFloat() {
+  return (
+    <a
+      href="https://wa.me/?text=Check%20out%20my%20Expense%20Tracker"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Share on WhatsApp"
+      title="Share on WhatsApp"
+      style={{
+        position: "fixed",
+      bottom: "24px",
+      right: "24px",
+        width: "56px",
+        height: "56px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#25d366",
+        borderRadius: "50%",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+        zIndex: 99999,
+      }}
+    >
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="#fff" aria-hidden="true">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+      </svg>
+    </a>
+  );
+}
+
+function App() {
+  const [active, setActive] = useState("zustand");
+  const { View, note } = APPROACHES[active];
+
+  return (
+    <div className="page">
+      <div className="container">
         <h1>Expense Tracker</h1>
-        <p>Global state management comparison</p>
-      </header>
+        <p className="subtitle">Global state management comparison</p>
 
-      <nav className="state-tabs">
-        {["Zustand", "Redux Toolkit", "Redux Thunk"].map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            className={`state-tab ${activeTab === tab ? "active" : ""}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
-      </nav>
-
-      <p className="state-description">
-        {stateDescriptions[activeTab]}
-      </p>
-
-      <section className="summary-container">
-        <div className="summary-card">
-          <h3>Starting Balance</h3>
-          <p>Rs. {formatMoney(balance)}</p>
+        <div className="tabs">
+          {Object.entries(APPROACHES).map(([key, item]) => (
+            <button
+              key={key}
+              className={`tab-btn ${active === key ? "active" : ""}`}
+              onClick={() => setActive(key)}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        <div className="summary-card expense-card">
-          <h3>Total Expenses</h3>
-          <p>Rs. {formatMoney(totalExpenses)}</p>
-        </div>
+        <p className="approach-note">{note}</p>
 
-        <div className="summary-card remaining-card">
-          <h3>Remaining Balance</h3>
-          <p>Rs. {formatMoney(remainingBalance)}</p>
-        </div>
-      </section>
+        {/* key forces a fresh mount (and a fresh fetch) when switching */}
+        <View key={active} />
+      </div>
 
-      <section className="balance-section">
-        <h2>Starting Balance</h2>
-
-        <div className="balance-form">
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={balanceInput}
-            onChange={(event) => setBalanceInput(event.target.value)}
-            placeholder="Enter starting balance"
-          />
-
-          <button type="button" onClick={saveBalance}>
-            Save Balance
-          </button>
-        </div>
-      </section>
-
-      <section className="expense-section">
-        <h2>Add Expense</h2>
-
-        <form onSubmit={addExpense} className="expense-form">
-          <select
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            required
-          >
-            <option value="">Select Expense Type</option>
-
-            {expenseTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            placeholder="Enter Amount"
-            required
-          />
-
-          <button type="submit">Add Expense</button>
-        </form>
-      </section>
-
-      <section className="list-section">
-        <h2>Expense List</h2>
-
-        {expenses.length === 0 ? (
-          <p className="empty-message">No expenses added yet.</p>
-        ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Expense Type</th>
-                  <th>Amount</th>
-                  <th>Quantity</th>
-                  <th>Edit</th>
-                  <th>Delete</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {expenses.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.title}</td>
-
-                    <td>
-                      Rs.{" "}
-                      {formatMoney(
-                        Number(item.amount) * Number(item.quantity || 1)
-                      )}
-                    </td>
-
-                    <td>
-                      <div className="quantity-control">
-                        <button
-                          type="button"
-                          className="quantity-btn minus"
-                          onClick={() => updateQuantity(item, -1)}
-                          disabled={Number(item.quantity || 1) <= 1}
-                        >
-                          −
-                        </button>
-
-                        <span className="quantity-number">
-                          {item.quantity || 1}
-                        </span>
-
-                        <button
-                          type="button"
-                          className="quantity-btn plus"
-                          onClick={() => updateQuantity(item, 1)}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </td>
-
-                    <td>
-                      <button
-                        type="button"
-                        className="edit-btn"
-                        onClick={() => openEditPopup(item)}
-                      >
-                        Edit
-                      </button>
-                    </td>
-
-                    <td>
-                      <button
-                        type="button"
-                        className="delete-btn"
-                        onClick={() => setDeleteId(item.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      {editingExpense && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2>Edit Expense</h2>
-
-            <form onSubmit={saveEdit}>
-              <label>Expense Type</label>
-
-              <select
-                value={editTitle}
-                onChange={(event) => setEditTitle(event.target.value)}
-                required
-              >
-                <option value="">Select Expense Type</option>
-
-                {expenseTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-
-              <label>Amount</label>
-
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={editAmount}
-                onChange={(event) => setEditAmount(event.target.value)}
-                required
-              />
-
-              <div className="modal-buttons">
-                <button type="submit" className="save-btn">
-                  Update
-                </button>
-
-                <button
-                  type="button"
-                  className="cancel-btn"
-                  onClick={() => setEditingExpense(null)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {deleteId !== null && (
-        <div className="modal-overlay">
-          <div className="modal delete-modal">
-            <h2>Confirm Delete</h2>
-
-            <p>Are you sure you want to delete this expense?</p>
-
-            <div className="modal-buttons">
-              <button
-                type="button"
-                className="confirm-delete-btn"
-                onClick={deleteExpense}
-              >
-                Yes, Delete
-              </button>
-
-              <button
-                type="button"
-                className="cancel-btn"
-                onClick={() => setDeleteId(null)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Floating WhatsApp icon on the right side */}
+      <WhatsAppFloat />
     </div>
   );
 }
