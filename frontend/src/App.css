@@ -1,0 +1,511 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f1f5f9;
+  color: #333;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* Main container */
+
+.app-container {
+  width: 95%;
+  max-width: 1000px;
+  margin: 6px auto 30px;
+  padding: 25px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Header */
+
+.app-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.app-header h1 {
+  color: #244777;
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.app-header p {
+  color: #777;
+  font-size: 15px;
+}
+
+/* State management tabs */
+
+.state-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+.state-tab {
+  padding: 11px 10px;
+  background: #e5e9f3;
+  color: #244777;
+  border-radius: 7px;
+}
+
+.state-tab:hover {
+  background: #d5dced;
+}
+
+.state-tab.active {
+  background: #1d407e;
+  color: white;
+}
+
+.state-tab.active:hover {
+  background: #173567;
+}
+
+.state-description {
+  text-align: center;
+  color: #666;
+  font-size: 13px;
+  margin: 10px 0 20px;
+}
+
+/* Summary cards */
+
+.summary-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.summary-card {
+  background: #edf0ff;
+  padding: 19px 12px;
+  border-radius: 9px;
+  text-align: center;
+}
+
+.summary-card h3 {
+  color: #555;
+  font-size: 16px;
+  font-weight: 400;
+  margin-bottom: 9px;
+}
+
+.summary-card p {
+  color: #244777;
+  font-size: 21px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
+}
+
+.expense-card {
+  background: #edf0ff;
+}
+
+.remaining-card {
+  background: #edf0ff;
+}
+
+/* Starting balance section */
+
+.balance-section {
+  margin-bottom: 24px;
+}
+
+section h2 {
+  color: #244777;
+  font-size: 20px;
+  margin-bottom: 13px;
+}
+
+.balance-form {
+  display: flex;
+  gap: 10px;
+}
+
+.balance-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.balance-form button {
+  width: 105px;
+  padding: 11px;
+  background: #1d407e;
+  color: white;
+}
+
+.balance-form button:hover {
+  background: #173567;
+}
+
+/* Add expense section */
+
+.expense-section {
+  margin-bottom: 25px;
+}
+
+.expense-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+}
+
+.expense-form select,
+.expense-form input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  color: #333;
+  font-size: 14px;
+}
+
+.expense-form select {
+  cursor: pointer;
+}
+
+.expense-form button {
+  padding: 11px 17px;
+  background: #1d407e;
+  color: white;
+}
+
+.expense-form button:hover {
+  background: #173567;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #244777;
+  box-shadow: 0 0 0 2px rgba(36, 71, 119, 0.1);
+}
+
+/* Expense list */
+
+.list-section {
+  margin-top: 22px;
+}
+
+.empty-message {
+  text-align: center;
+  padding: 22px;
+  background: #f5f7fb;
+  border-radius: 7px;
+  color: #777;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #edf0ff;
+  color: #244777;
+}
+
+th,
+td {
+  padding: 13px 10px;
+  text-align: center;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+th {
+  font-size: 15px;
+}
+
+td {
+  font-size: 14px;
+}
+
+tbody tr:hover {
+  background: #f8f9fc;
+}
+
+/* Quantity counter */
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.quantity-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: white;
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quantity-btn.minus {
+  background: #dc4545;
+}
+
+.quantity-btn.minus:hover:not(:disabled) {
+  background: #bd2929;
+}
+
+.quantity-btn.plus {
+  background: #269b58;
+}
+
+.quantity-btn.plus:hover {
+  background: #197a43;
+}
+
+.quantity-number {
+  min-width: 18px;
+  font-weight: bold;
+}
+
+/* Edit and Delete buttons */
+
+.edit-btn {
+  padding: 8px 15px;
+  background: #f0ad32;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: #d9951c;
+}
+
+.delete-btn {
+  padding: 8px 15px;
+  background: #dc4545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #bd2929;
+}
+
+/* Modal background */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal box */
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  padding: 27px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  animation: popup 0.2s ease;
+}
+
+@keyframes popup {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal h2 {
+  margin-bottom: 20px;
+  color: #244777;
+  font-size: 22px;
+}
+
+.modal label {
+  display: block;
+  margin: 12px 0 7px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modal input,
+.modal select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  padding: 11px;
+}
+
+/* Modal buttons */
+
+.save-btn {
+  background: #1d407e;
+  color: white;
+}
+
+.save-btn:hover {
+  background: #173567;
+}
+
+.cancel-btn {
+  background: #777;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #555;
+}
+
+.delete-modal {
+  text-align: center;
+}
+
+.delete-modal p {
+  color: #666;
+  line-height: 1.5;
+}
+
+.confirm-delete-btn {
+  background: #dc4545;
+  color: white;
+}
+
+.confirm-delete-btn:hover {
+  background: #bd2929;
+}
+
+/* Loading */
+
+.loading {
+  margin-top: 100px;
+  text-align: center;
+  color: #244777;
+}
+
+/* Tablet */
+
+@media (max-width: 768px) {
+  .app-container {
+    width: 96%;
+    padding: 18px;
+  }
+
+  .summary-container {
+    grid-template-columns: 1fr;
+  }
+
+  .expense-form {
+    grid-template-columns: 1fr;
+  }
+
+  .expense-form button {
+    width: 100%;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+  .app-container {
+    padding: 14px;
+  }
+
+  .app-header h1 {
+    font-size: 26px;
+  }
+
+  .state-tabs {
+    gap: 5px;
+  }
+
+  .state-tab {
+    padding: 10px 4px;
+    font-size: 12px;
+  }
+
+  .balance-form {
+    flex-direction: column;
+  }
+
+  .balance-form button {
+    width: 100%;
+  }
+
+  .summary-card p {
+    font-size: 20px;
+  }
+
+  .modal {
+    padding: 20px;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+  }
+}
