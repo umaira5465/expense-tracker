@@ -508,4 +508,18 @@ tbody tr:hover {
   .modal-buttons {
     flex-direction: column;
   }
+  .whatsapp-btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 10px 20px;
+  background: #25d366;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.whatsapp-btn:hover {
+  background: #1ebe5a;
+}
 }
